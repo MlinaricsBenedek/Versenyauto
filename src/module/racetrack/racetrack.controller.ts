@@ -1,9 +1,8 @@
 import { FastifyRequest } from "fastify/types/request.js";
 import { RaceTrackService } from "./racetrack.service.js";
 import { FastifyReply } from "fastify/types/reply.js";
-import { createRaceTrackShema, CreateRaceTrackShema, editRaceTrackShema, EditRaceTrackShema } from "./racetrack.shema.js";
-import { BadRequestError, NotFoundError } from "../../error/errors.js";
-import { editCarShema } from "../cars/car.shema.js";
+import { RequestTrackShema, requestTrackShema } from "./racetrack.shema.js";
+import { BadRequestError, NotFoundError, UnathorizedError } from "../../error/errors.js";
 
 export class RaceTrackController {
   private raceTrackService: RaceTrackService;
@@ -12,33 +11,42 @@ export class RaceTrackController {
   }
 
   async create(
-    request: FastifyRequest<{ Body: CreateRaceTrackShema }>,
+    request: FastifyRequest<{ Body: RequestTrackShema }>,
     reply: FastifyReply
   ) {
-      const result = createRaceTrackShema.safeParse(request.body);
+    let userId=(request as any).userId;
+      const result = requestTrackShema.safeParse(request.body);
        if(!result.success) throw new BadRequestError("Invalid properties",result.error);
-      await this.raceTrackService.create(request.body);
+      await this.raceTrackService.create(result.data,userId);
       return reply.code(201).send();
     }
   
   async update(
-    request: FastifyRequest<{ Body: EditRaceTrackShema }>,
+    request: FastifyRequest<{ Body: RequestTrackShema,Params:{id:string} }>,
     reply: FastifyReply
-  ) { 
-      let result = editRaceTrackShema.safeParse(request.body);
+  ) { let userId=(request as any).userId;
+      let paramId = Number(request.params.id)
+      if(!paramId) throw new BadRequestError();
+      let result = requestTrackShema.safeParse(request.body);
       if(!result.success) throw new BadRequestError("Invalid properties",result.error);
-      await this.raceTrackService.edit(request.body);
+      await this.raceTrackService.edit(result.data,userId,paramId);
       return reply.code(201).send();
   }
 
   async getAll(request: FastifyRequest, reply: FastifyReply) {
-      return reply.code(200).send( await this.raceTrackService.getAll());
+    let userId=(request as any).userId;
+    if(!userId) throw new UnathorizedError();
+     let tracks=await this.raceTrackService.getAll()
+      return reply.code(200).send(tracks);
   }
 
   async get(
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply
-  ) {      return reply.code(200).send(await this.raceTrackService.getById(Number(request.params.id)));
+  ) {  let paramId =Number(request.params.id);
+    if(!paramId) throw new BadRequestError("Param is invalid");
+    
+    return reply.code(200).send(await this.raceTrackService.getById(paramId));
     }
 
 
@@ -46,7 +54,9 @@ export class RaceTrackController {
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply
   ) {
-      await this.raceTrackService.delete(Number(request.params.id));
+    let paramId=Number(request.params.id)
+    if(!paramId) throw new BadRequestError("Invalid params")
+      await this.raceTrackService.delete(paramId);
       return reply.code(204).send();
   }
 }

@@ -1,14 +1,15 @@
 import db from "../../db/db.js";
-import type { CreateUserInput, EditUserShema } from "./user.shema.js";
+import { Role } from "../../helper/enum.js";
+import type {  CreateUserShema, EditUserShema, UserReponse } from "./user.shema.js";
 
 export class UserRepository {
-  async create(userDto: CreateUserInput) {
+  async create(userDto: CreateUserShema) {
     return await db("user")
       .insert({
         name: userDto.name,
         email: userDto.email,
         password: userDto.password,
-        role: "user",
+        role: userDto.role
       })
       .returning("id");
   }
@@ -29,6 +30,14 @@ export class UserRepository {
     return await db("user").where({ id }).delete();
   }
 
+  async deleteRefreshToken(userId:number){
+    return await db("user").where({id:userId}).update({refreshToken:null}).returning('id')
+  }
+
+  async updateRole(userRole:Role,userId:number){
+    return await db("user").where({id:userId}).update({role:userRole})
+  }
+
   async update(userDto: EditUserShema) {
     return await db("user")
       .select("*")
@@ -37,7 +46,7 @@ export class UserRepository {
         name: userDto.name,
         email: userDto.email,
         password: userDto.password,
-        role: "user",
+        refreshToken:userDto.refreshToken
       })
       .returning("id");
   }

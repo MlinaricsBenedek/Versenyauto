@@ -1,4 +1,3 @@
-import { ca } from "zod/locales";
 import db from "../../db/db.js";
 import type { CreateCarShema, EditCarShema } from "./car.shema.js";
 import { editCarShema } from "./car.shema.js";
@@ -37,6 +36,6 @@ export class CarRepository {
   }
 
   async getAll() {
-    return db("car").select("*");
+    return await db("car").select("*");
   }
 }
