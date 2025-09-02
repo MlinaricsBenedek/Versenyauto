@@ -2,7 +2,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { ErrorShema } from "./ErrorModell.js";
 import { BadRequestError, ForbiddenError, NotFoundError, UnathorizedError } from "./errors.js";
 import { formatZodError } from "../module/user/user.shema.js";
-import { ZodError } from "zod/v3";
+import { unknown, ZodError } from "zod/v3";
 export class GlobalErrorHandler{
  
     public static ErrorHandler(error:Error|ZodError,request:FastifyRequest,reply:FastifyReply){
@@ -11,43 +11,47 @@ export class GlobalErrorHandler{
         reply.code(404).send({
             statusCode:404,
             name:"NotFound",
-            message:"The resource is not found",
+            message:"The resource is not found"+error.message,
         });
+        request.log.error({ err: error, url: request.url, method: request.method });
     }
 if (error instanceof BadRequestError) {
   reply.code(400).send({
     statusCode: 400,
     name: "BadRequest",
-    message: "Validation error",
+    message: "Validation error"+error.message,
     details: error.details 
       ? formatZodError(error.details) 
       : []
   });
+  request.log.error({ err: error, url: request.url, method: request.method });
 }
     if(error instanceof ForbiddenError)
     {
           reply.code(403).send({
             statusCode:403,
             name:"Forbidden",
-            message:"You don't have the permission",
+            message:"You don't have the permission"+error.message,
         });
+        request.log.error({ err: error, url: request.url, method: request.method });
     }
      if(error instanceof UnathorizedError)
     {
           reply.code(401).send({
             statusCode:401,
             name:"UnathorizedError",
-            message:"You are not logged in ",
+            message:"You are not logged in "+error.message,
         });
+        request.log.error({ err: error, url: request.url, method: request.method });
     }
-    else
-    {
-        reply.code(500).send({
-            statusCode:500,
-            name:"Internal Server Error",
-            message:"Ooopsss.... Something went wrong, please try again later",
-        });
-    }
+    // else
+    // {
+    //     reply.code(500).send({
+    //         statusCode:500,
+    //         name:"Internal Server Error",
+    //         message:"Ooopsss.... Something went wrong, please try again later",
+    //     });
+    // }
 }
 }
 

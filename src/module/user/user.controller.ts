@@ -1,12 +1,16 @@
 import fastify, { FastifyReply, FastifyRequest } from "fastify";
 import { UserService } from "./user.service.js";
 import {
-  CreateUserInput,
-  createUserShema,
+  editUserRequestShema,
+  EditUserRequestShema,
   editUserShema,
-  EditUserShema,
+  registerUserShema,
+  RegisterUserSHema,
+  userJsonSchema,
+  UserReponse,
 } from "./user.shema.js";
-import { BadRequestError, NotFoundError } from "../../error/errors.js";
+import { BadRequestError, NotFoundError, UnathorizedError } from "../../error/errors.js";
+import { Role } from "../../helper/enum.js";
 
 export class UserController {
   private userService: UserService;
@@ -14,46 +18,63 @@ export class UserController {
   constructor() {
     this.userService = new UserService();
   }
-
-  async registerUserHandler(
-    request: FastifyRequest<{ Body: CreateUserInput }>,
+  async register(
+    request: FastifyRequest<{ Body: RegisterUserSHema }>,
     reply: FastifyReply
   ) {
-    const result = createUserShema.safeParse(request.body);
+    const result = registerUserShema.safeParse(request.body);
     if (!result.success)
       throw new BadRequestError("Invalid properties", result.error);
-    await this.userService.registerUser(request.body);
+    await this.userService.register(result.data);
     return reply.code(201).send();
   }
 
-  async get(
-    request: FastifyRequest<{ Params: { id: string } }>,
-    reply: FastifyReply
-  ) {
-    return reply
-      .code(200)
-      .send(await this.userService.get(Number(request.params.id)));
-  }
+  async get(request: FastifyRequest<{Params: { id: string }}>, reply: FastifyReply) {
+ let userId=(request as any).userId;
+      let paramId=Number(request.params.id)
+    if(!paramId) throw new BadRequestError("Invalid params")
+      let user = await this.userService.get(paramId,userId)
+  return reply.code(200).send(user);
+}
+
   async getAll(request: FastifyRequest, reply: FastifyReply) {
     return reply.code(200).send(await this.userService.getAll());
   }
 
+  async edit(request: FastifyRequest<{ Body: {role:Role},Params: { id: string } }>,
+    reply: FastifyReply){
+      let userId=Number(request.params.id)
+    if(!userId) throw new BadRequestError("Invalid params")
+      if(!request.body.role)
+      {
+        throw new BadRequestError('Role is required');
+      }
+      await this.userService.editUserRole(userId,request.body.role);
+      return reply.code(200).send();
+  }
+
   async update(
-    request: FastifyRequest<{ Body: EditUserShema }>,
+    request: FastifyRequest<{ Body: EditUserRequestShema,Params: { id: string } }>,
     reply: FastifyReply
   ) {
-    const result = createUserShema.safeParse(request.body);
+    let userId=(request as any).userId;
+    let paramId=Number(request.params.id)
+    if(!paramId && !userId) throw new BadRequestError("Invalid params")
+    const result = editUserRequestShema.safeParse({...request.body});
     if (!result.success)
       throw new BadRequestError("Invalid properties", result.error);
-    await this.userService.update(request.body);
+    await this.userService.update(result.data,userId,paramId);
     return reply.code(201).send();
-  }
+  } 
 
   async delete(
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply
   ) {
-    await this.userService.delete(Number(request.params.id));
+    let userId=(request as any).userId;
+    let paramId=Number(request.params.id)
+    if(!paramId) throw new BadRequestError("Invalid params")
+    await this.userService.delete(paramId,userId);
     return reply.code(204).send();
   }
 }

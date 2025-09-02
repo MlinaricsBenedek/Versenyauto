@@ -1,17 +1,14 @@
 import db from "../../db/db.js";
-import {
-  CreateRaceTrackShema,
-  editRaceTrackShema,
-  EditRaceTrackShema,
-} from "./racetrack.shema.js";
+import { CreateTrackShema, EditTrackShema } from "./racetrack.shema.js";
 
 export class RaceTrackRepository {
-  async create(racetrackDto: CreateRaceTrackShema) {
+  async create(racetrackDto: CreateTrackShema) {
     return await db("racetrack")
       .insert({
         name: racetrackDto.name,
         country: racetrackDto.country,
         kilometer: racetrackDto.kilometer,
+        owner_id:racetrackDto.userId
       })
       .returning("id");
   }
@@ -24,11 +21,11 @@ export class RaceTrackRepository {
     return await db("racetrack").where({ id }).delete();
   }
 
-  async edit(_editRaceTrackShema: EditRaceTrackShema) {
-    let data = editRaceTrackShema.parse(_editRaceTrackShema);
+  async edit(_editRaceTrackShema: EditTrackShema) {
+
     return await db("racetrack")
       .select("*")
-      .where({ id: data.id })
+      .where({ id: _editRaceTrackShema.id })
       .update({
         name: _editRaceTrackShema.name,
         country: _editRaceTrackShema.country,

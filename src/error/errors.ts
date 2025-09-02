@@ -2,7 +2,7 @@ import { ZodAny, ZodError } from "zod/v3";
 
 export class NotFoundError extends Error {
   statusCode: number;
-  constructor(message = "Resource not found") {
+  constructor(message:string) {
     super(message);
     this.name = "NotFoundError";
     this.statusCode = 404;
