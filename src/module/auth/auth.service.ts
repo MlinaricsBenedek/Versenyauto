@@ -3,7 +3,7 @@ import { Hash, Verify } from "../../helper/hash.js";
 import { BadRequestError, ForbiddenError, NotFoundError, UnathorizedError } from "../../error/errors.js";
 import {  generateToken, genereateRefreshToken, jwtAccessTokenVerify, jwtRefreshTokenVerify } from "../../helper/tokenHandler.js";
 import { UserRepository } from "../user/user.repository.js";
-import { jwTokenResponse, responseUserShema, TokenResponse, User, UserReponse } from "../user/user.shema.js";
+import { jwTokenResponse, responseUserShema, TokenResponse, User, UserReponse, userShema } from "../user/user.shema.js";
 import dotenv from "dotenv";
 import { LoginRequest } from "./auth.shema.js";
 dotenv.config();
@@ -19,7 +19,7 @@ export class AuthService {
     if (!userDto) {
       throw new NotFoundError("Resource not found");
     }
-    let userModell = User.safeParse(userDto)
+    let userModell = userShema.safeParse(userDto)
 
     if(!userModell.success)
     {

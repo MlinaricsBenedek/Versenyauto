@@ -1,39 +1,46 @@
-// user.route.ts
-import { FastifyInstance } from "fastify";
 import { UserController } from "./user.controller.js";
 import {
   authenticate,
   autorization,
 } from "./middlewear/middlewear.strategy.js";
 import {
+  editRoleUserShema,
   EditUserRequestShema,
-  RegisterUserSHema,
+  requestUserShema,
+  RequestUserSHema,
+  responseUserArraySchema,
+  responseUserShema,
 } from "./user.shema.js";
 import { Role } from "../../helper/enum.js";
+import { FastifyTypedInstance } from "../../types.js";
+import z from "zod";
 
-export async function userRoutes(server: FastifyInstance) {
+export async function userRoutes(server: FastifyTypedInstance) {
   const controller = new UserController();
- server.post<{ Body: RegisterUserSHema }>(
-    "/user", {
-      //schema: {
-      //  body: { $ref: "RequestCreateUserShema#" },
-        // response: {
-      //     201: { type: "string" },
-      //   }
-      // }
+  server.post<{ Body: RequestUserSHema }>(
+    "/user",
+    {
+      schema: {
+        tags: ["users"],
+        body: requestUserShema,
+        response: {
+          201: z.string(),
+        },
+      },
     },
     controller.register.bind(controller)
   );
   server.get(
     "/user",
     {
+      schema: {
+        tags: ["users"],
+        response: {
+          200: responseUserArraySchema,
+        },
+        security: [{ BearerAuth: [] }],
+      },
       preHandler: [authenticate, autorization(Role.versenyiranyito)],
-      // schema: {
-      //   response: {
-      //     200: { $ref: "UsersArrayShema#" },
-      //   },
-      //   security: [{ BearerAuth: [] }],
-      // },
     },
     controller.getAll.bind(controller)
   );
@@ -41,26 +48,29 @@ export async function userRoutes(server: FastifyInstance) {
   server.get<{ Params: { id: string } }>(
     "/user/:id",
     {
+      schema: {
+        tags: ["users"],
+        response: {
+          200: responseUserShema,
+        },
+      },
       preHandler: [authenticate, autorization(Role.versenyzo)],
-      // schema: {
-      //   response: {
-      //     200: { $ref: "UsersArrayShema#" }, 
-      //   },
-      // },
     },
     controller.get.bind(controller)
   );
 
-  server.put<{ Body: EditUserRequestShema,Params: { id: string } }>(
+  server.put<{ Body: EditUserRequestShema; Params: { id: string } }>(
     "/user/:id",
     {
+      schema: {
+        security: [{ BearerAuth: [] }],
+        body: requestUserShema,
+        tags: ["users"],
+        response: {
+          201: z.string(),
+        },
+      },
       preHandler: [authenticate, autorization(Role.versenyzo)],
-      // schema: {
-      //   body: { $ref: "RequestCreateUserShema#" },
-      //   response: {
-      //     201: { type: "string" },
-      //   },
-      // },
     },
     controller.update.bind(controller)
   );
@@ -68,13 +78,15 @@ export async function userRoutes(server: FastifyInstance) {
   server.patch<{ Body: { role: Role }; Params: { id: string } }>(
     "/user/:id",
     {
+      schema: {
+        security: [{ BearerAuth: [] }],
+        tags: ["users"],
+        body: editRoleUserShema,
+        response: {
+          201: z.string(),
+        },
+      },
       preHandler: [authenticate, autorization(Role.versenyiranyito)],
-      // schema: {
-      //   body: { $ref: "EditRoleUserShema#" },
-      //   response: {
-      //     201: { type: "string" },
-      //   },
-      // },
     },
     controller.edit.bind(controller)
   );
@@ -82,14 +94,15 @@ export async function userRoutes(server: FastifyInstance) {
   server.delete<{ Params: { id: string } }>(
     "/user/:id",
     {
+      schema: {
+        security: [{ BearerAuth: [] }],
+        tags: ["users"],
+        response: {
+          204: z.null(),
+        },
+      },
       preHandler: [authenticate, autorization(Role.versenyzo)],
-      // schema: {
-      //   response: {
-      //     204: {}
-      //   },
-      // },
     },
     controller.delete.bind(controller)
   );
 }
-

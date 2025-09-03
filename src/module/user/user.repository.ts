@@ -1,6 +1,7 @@
 import db from "../../db/db.js";
 import { Role } from "../../helper/enum.js";
-import type {  CreateUserShema, EditUserShema, UserReponse } from "./user.shema.js";
+import type { CreateUserShema, User, UserReponse } from "./user.shema.js";
+
 
 export class UserRepository {
   async create(userDto: CreateUserShema) {
@@ -38,7 +39,7 @@ export class UserRepository {
     return await db("user").where({id:userId}).update({role:userRole})
   }
 
-  async update(userDto: EditUserShema) {
+  async update(userDto: User) {
     return await db("user")
       .select("*")
       .where({ id: userDto.id })

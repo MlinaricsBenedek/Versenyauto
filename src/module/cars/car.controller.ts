@@ -1,8 +1,7 @@
 import  { FastifyReply, FastifyRequest } from "fastify";
 import { CarSerive } from "./car.service.js";
 import {
-  requestCarEditShema,
-  RequestCarEditShema,
+
   requestCarShema,
   RequestCarShema,
 } from "./car.shema.js";
@@ -29,17 +28,17 @@ export class CarController {
   }
 
   async update(
-    request: FastifyRequest<{ Body: RequestCarEditShema,Params:{id:string} }>,
+    request: FastifyRequest<{ Body: RequestCarShema,Params:{id:string} }>,
     reply: FastifyReply
   ) {
-    let userId=(request as any).UserId;
+    let userId=(request as any).userId;
     let paramId = Number(request.params.id)
      if(!paramId){
       throw new BadRequestError("Param is invalidS");
      }
-     let editShema=requestCarEditShema.safeParse(request.body)
+     let editShema=requestCarShema.safeParse(request.body)
     if(!editShema.success) throw new BadRequestError();
-    await this.carService.edit(editShema.data,paramId,userId);
+    await this.carService.edit(editShema.data,userId,paramId);
     return reply.code(201).send();
   }
 
@@ -52,7 +51,7 @@ export class CarController {
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply
   ) {
-    let userId=(request as any).UserId; 
+    let userId=(request as any).userId; 
     const carId = Number(request.params.id);
     const car = await this.carService.getById(carId,userId);
     return reply.code(200).send(car);
@@ -62,8 +61,10 @@ export class CarController {
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply
   ) {
-     let userId=(request as any).UserId; 
+     let id=(request as any).userId;
+     
     const carId = Number(request.params.id);
+    const userId = Number(request.params.id)
     await this.carService.delete(carId,userId);
     return reply.code(204).send();
   }

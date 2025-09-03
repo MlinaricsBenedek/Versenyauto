@@ -1,26 +1,15 @@
-import fastify, { FastifyReply, FastifyRequest } from "fastify";
+import fastify from "fastify";
 import { GlobalErrorHandler } from "./error/GlobalErrorHandlers.js";
 import fastifyCookie from "@fastify/cookie";
 import swagger from "@fastify/swagger";
- import {jsonSchemaTransform,ZodTypeProvider} from "fastify-type-provider-zod"
+ import {jsonSchemaTransform,serializerCompiler,validatorCompiler,ZodTypeProvider} from "fastify-type-provider-zod"
 import fastifySwaggerUI from "@fastify/swagger-ui";
-import {
-authRoutes
- 
-} from "./module/auth/auth.route.js";
 import dotenv from "dotenv";
-import { editCarJSONShema, registerCarSchemas, requestCarEditShema, requestCarJSONShema, responseAllCarJSONShema, responseCarJSONShema } from "./module/cars/car.shema.js";
-import {
-  carRoutes
-} from "./module/cars/car.route.js";
 import { userRoutes } from "./module/user/user.route.js";
-import {
-  racetrackRoutes,
-} from "./module/racetrack/racetrack.routes.js";
-import { loginJSONSHema, loginResponseShema, registerAuthSchemas, responseLoginJSONSchema } from "./module/auth/auth.shema.js";
-import { editRoleJSONSchema, registerUserSchemas, requestCreateUserJSONSHema, userJsonSchema, usersJSONSchema } from "./module/user/user.shema.js";
-import { arrayTrackJSONShema, registerTrackSchemas, requestTrackJSONShema, TrackJSONShema } from "./module/racetrack/racetrack.shema.js";
-
+import cors from "@fastify/cors"
+import { authRoutes } from "./module/auth/auth.route.js";
+import { carRoutes } from "./module/cars/car.route.js";
+import { racetrackRoutes } from "./module/racetrack/racetrack.routes.js";
 dotenv.config();
 
 const server = fastify({
@@ -44,9 +33,10 @@ const server = fastify({
     },
   },
  }).withTypeProvider<ZodTypeProvider>();
-
+server.register(cors,{origin:"*"});
 dotenv.config();
-
+server.setValidatorCompiler(validatorCompiler);
+server.setSerializerCompiler(serializerCompiler);
 server.register(swagger, {
    mode: "dynamic",
   openapi: {
@@ -57,12 +47,18 @@ server.register(swagger, {
     },
      components: {
        securitySchemes: {
+         RefreshCookie: {
+          type: "apiKey",
+          in: "cookie",
+          name: "refreshToken", 
+        },
         BearerAuth: {
           type: "http",
           scheme: "bearer",
           bearerFormat: "JWT",
         },
-      }
+      },
+      
     },
      security: [{ BearerAuth: [] }], 
   },
@@ -75,20 +71,6 @@ server.register(fastifySwaggerUI, {
     docExpansion: "full",
     deepLinking: false,
   },
-  uiHooks: {
-    onRequest: function (request, reply, next) {
-      next();
-    },
-    preHandler: function (request, reply, next) {
-      next();
-    },
-  },
-  staticCSP: true,
-  transformStaticCSP: (header) => header,
-  transformSpecification: (swaggerObject, request, reply) => {
-    return swaggerObject;
-  },
-  transformSpecificationClone: true,
 });
 
 server.register(fastifyCookie, {
@@ -105,15 +87,9 @@ server.setErrorHandler(GlobalErrorHandler.ErrorHandler);
 
 async function main() {
   try {
-    
-registerCarSchemas(server);
-registerUserSchemas(server);
-registerAuthSchemas(server);
-registerTrackSchemas(server);
-
     server.register(carRoutes)
     server.register(userRoutes)
-    server.register(authRoutes)
+   server.register(authRoutes)
     server.register(racetrackRoutes)
     await server.listen({ port: 3000, host: "0.0.0.0" });
     console.log(`Server is running on http://0.0.0.0:3000`);
