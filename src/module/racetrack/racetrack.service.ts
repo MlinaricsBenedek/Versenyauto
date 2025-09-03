@@ -1,6 +1,6 @@
 
 import { RaceTrackRepository } from "./racetrack.repository.js";
-import { createTrackSHema, editTrackSHema, requestTrackShema, RequestTrackShema } from "./racetrack.shema.js";
+import { createTrackSHema, requestTrackShema, RequestTrackShema, TrackShema, trackSHema, tracksSHema } from "./racetrack.shema.js";
 import { BadRequestError, NotFoundError } from "../../error/errors.js";
 
 export class RaceTrackService {
@@ -15,7 +15,8 @@ export class RaceTrackService {
       {
           throw new NotFoundError("Resource not found");
       }
-      return tracks;
+      let raceTrack = tracksSHema.safeParse(tracks);
+      return raceTrack.data;
   }
 
   async getById(id: number) {
@@ -24,7 +25,9 @@ export class RaceTrackService {
     {
         throw new NotFoundError("Resource not found");
     }
-    return track;
+    let raceTrack = trackSHema.safeParse(track);
+    if(!raceTrack.success) throw new BadRequestError();
+    return raceTrack.data;
   }
 
   async delete(id: number) {
@@ -40,9 +43,10 @@ export class RaceTrackService {
     await this.raceTrackRepository.create(trackShema.data);
   }
 
-  async edit(data: RequestTrackShema,user_Id:number,paramId:number) {
-    let trackShema=editTrackSHema.safeParse({...data,userId:user_Id,id:paramId});
-    if(!trackShema.success) throw new BadRequestError();
-    await this.raceTrackRepository.edit(trackShema.data);
+  async edit(data: RequestTrackShema,paramId:number) {
+    let currentTrack:TrackShema = await this.getById(paramId);
+    if(!currentTrack) throw new NotFoundError("resource not found");
+    let editedTrack:TrackShema = {id:currentTrack.id,owner_id:currentTrack.owner_id,...data }
+    await this.raceTrackRepository.edit(editedTrack);
   }
 }

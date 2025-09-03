@@ -1,12 +1,8 @@
 import { BadRequestError, ForbiddenError, NotFoundError } from "../../error/errors.js";
 import { UserService } from "../user/user.service.js";
 import { CarRepository } from "./car.repository.js";
-import {
-  Car,
-  RequestCarEditShema,
-  RequestCarShema,
-} from "./car.shema.js";
-import { createCarShema, editCarShema, requestCarShema } from "./car.shema.js";
+import { arrayCarShema, carShema, CarShema, createCarShema, RequestCarShema } from "./car.shema.js";
+
 
 export class CarSerive {
   private _carRepository: CarRepository;
@@ -17,26 +13,29 @@ export class CarSerive {
   }
 
   async getAll() {
-    let cars = await this._carRepository.getAll();
-    if (!cars) {
+    let carsDTO = await this._carRepository.getAll();
+    if (!carsDTO) {
       throw new NotFoundError("Resource not found");
     }
-    return cars;
+    let cars= arrayCarShema.safeParse(carsDTO)
+    if(!cars.success) throw new BadRequestError();
+    return cars.data;
   }
 
-  async getById(id: number,userId:number) {
+  async getById(id: number,autenticatedUserId:number) {
     let car = await this._carRepository.getById(id);
     if (!car) {
       throw new NotFoundError("Resource not found");
     }
-    let carDTO =Car.safeParse(car);
+    let carDTO =carShema.safeParse(car);
     if(!carDTO.success) throw new BadRequestError();
-    if(!await this._userService.UserPrivilege(userId,carDTO.data.userId)) throw new ForbiddenError();
-    return carDTO;
+    if(!await this._userService.UserPrivilege(carDTO.data.user_id,autenticatedUserId)) throw new ForbiddenError();
+    return carDTO.data;
   }
 
-  async delete(id: number,userId:number) {
-    let car =await this.getById(id,userId);
+  async delete(id: number,autenticatedUserId:number) {
+      
+    let car =await this.getById(id,autenticatedUserId);
     if(!car) throw new NotFoundError("The resource not found");
     await this._carRepository.delete(id);
   }
@@ -53,12 +52,10 @@ export class CarSerive {
     }
   }
 
-  async edit(carShema:RequestCarEditShema,user_Id:number,paramId:number) {
-    let result = editCarShema.safeParse({...carShema,userId:user_Id,id:paramId});
-    if (!result.success)
-      throw new BadRequestError("Invalid properties");
-     let car =await this.getById(paramId,user_Id);
+  async edit(request:RequestCarShema,autenticatedUserId:number,paramId:number) {
+    const car:CarShema =await this.getById(paramId,autenticatedUserId);
      if(!car) throw new NotFoundError("Can not create the user record");
-     await this._carRepository.edit(result.data)
+    const editedCar:CarShema = {id:car.id,user_id:car.user_id,...request};
+     await this._carRepository.edit(editedCar)
   }
 }

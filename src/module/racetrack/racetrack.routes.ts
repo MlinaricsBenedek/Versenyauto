@@ -1,32 +1,30 @@
-import { FastifyInstance } from "fastify";
 import { RaceTrackController } from "./racetrack.controller.js";
 import {
   authenticate,
   autorization,
 } from "../user/middlewear/middlewear.strategy.js";
 import {
-  arrayTrackJSONShema,
-  arrayTrackShema,
-  editTrackSHema,
-  requestTrackJSONShema,
   requestTrackShema,
   RequestTrackShema,
-  TrackJSONShema,
+  trackSHema,
+  tracksSHema,
 } from "./racetrack.shema.js";
 import { Role } from "../../helper/enum.js";
-import { responseCarJSONShema } from "../cars/car.shema.js";
 import z from "zod/v3";
+import { FastifyTypedInstance } from "../../types.js";
 
-export function racetrackRoutes(server: FastifyInstance) {
+export function racetrackRoutes(server: FastifyTypedInstance) {
   const controller = new RaceTrackController();
   server.post<{ Body: RequestTrackShema }>(
     "/racetrack",
     {
+      schema: {
+        security: [{ BearerAuth: [] }],
+        tags: ["racetrack"],
+        body: requestTrackShema,
+        response: { 201: z.string() },
+      },
       preHandler: [authenticate, autorization(Role.versenyiranyito)],
-      // schema: {
-      //   body: { $ref: "RequestTrackSchema#" },
-      //   response: { 201: { type: "string" } },
-      // },
     },
     controller.create.bind(controller)
   );
@@ -34,11 +32,13 @@ export function racetrackRoutes(server: FastifyInstance) {
   server.put<{ Body: RequestTrackShema; Params: { id: string } }>(
     "/racetrack/:id",
     {
+      schema: {
+        security: [{ BearerAuth: [] }],
+        tags: ["racetrack"],
+        body: requestTrackShema,
+        response: { 201: z.string()},
+      },
       preHandler: [authenticate, autorization(Role.versenyiranyito)],
-      // schema: {
-      //   body: { $ref: "RequestTrackSchema#" },
-      //   response: { 201: { type: "string" } },
-      // },
     },
     controller.update.bind(controller)
   );
@@ -46,10 +46,12 @@ export function racetrackRoutes(server: FastifyInstance) {
   server.get(
     "/racetrack",
     {
+      schema: {
+        security: [{ BearerAuth: [] }],
+        tags: ["racetrack"],
+        response: { 200: tracksSHema },
+      },
       preHandler: [authenticate, autorization(Role.versenyiranyito)],
-      // schema: {
-      //   response: { 200: { $ref: "ArrayTrackSchema#" } },
-      // },
     },
     controller.getAll.bind(controller)
   );
@@ -57,22 +59,25 @@ export function racetrackRoutes(server: FastifyInstance) {
   server.get<{ Params: { id: string } }>(
     "/racetrack/:id",
     {
-      preHandler: [authenticate, autorization(Role.versenyiranyito)]},
-    //   schema: {
-    //     response: { 200: { $ref: "EditTrackSchema#" } },
-    //   },
-    // },
+      schema: {security: [{ BearerAuth: [] }],
+        tags: ["racetrack"],
+        response: { 200: trackSHema },
+      },
+      preHandler: [authenticate, autorization(Role.versenyiranyito)],
+    },
+
     controller.get.bind(controller)
   );
 
   server.delete<{ Params: { id: string } }>(
     "/racetrack/:id",
     {
-      preHandler: [authenticate, autorization(Role.versenyiranyito)]},
-    //   schema: {
-    //     response: { 204: {} },
-    //   },
-    // },
+      schema: {security: [{ BearerAuth: [] }],
+        tags: ["racetrack"],
+        response: { 204: z.null() },
+      },
+      preHandler: [authenticate, autorization(Role.versenyiranyito)],
+    },
     controller.delete.bind(controller)
   );
 }

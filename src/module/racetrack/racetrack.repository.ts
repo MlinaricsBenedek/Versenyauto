@@ -1,5 +1,5 @@
 import db from "../../db/db.js";
-import { CreateTrackShema, EditTrackShema } from "./racetrack.shema.js";
+import { CreateTrackShema, TrackShema } from "./racetrack.shema.js";
 
 export class RaceTrackRepository {
   async create(racetrackDto: CreateTrackShema) {
@@ -21,7 +21,7 @@ export class RaceTrackRepository {
     return await db("racetrack").where({ id }).delete();
   }
 
-  async edit(_editRaceTrackShema: EditTrackShema) {
+  async edit(_editRaceTrackShema: TrackShema) {
 
     return await db("racetrack")
       .select("*")

@@ -1,6 +1,6 @@
 import db from "../../db/db.js";
-import type { CreateCarShema, EditCarShema } from "./car.shema.js";
-import { editCarShema } from "./car.shema.js";
+import { CarShema, CreateCarShema } from "./car.shema.js";
+
 
 export class CarRepository {
   async create(carDto: CreateCarShema) {
@@ -22,15 +22,14 @@ export class CarRepository {
     return await db("car").where({ id }).delete();
   }
 
-  async edit(carDto: EditCarShema) {
-    let data = editCarShema.parse(carDto);
+  async edit(carDto: CarShema) {
     return await db("car")
       .select("*")
-      .where({ id: data.id })
+      .where({ id: carDto.id })
       .update({
-        brand: data.brand,
-        type: data.type,
-        horsepower: data.horsepower,
+        brand: carDto.brand,
+        type: carDto.type,
+        horsepower: carDto.horsepower,
       })
       .returning("id");
   }

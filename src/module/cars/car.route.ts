@@ -1,53 +1,50 @@
-import { FastifyInstance } from "fastify";
 import { CarController } from "./car.controller.js";
 import {
-  arrayShema,
-  Car,
+  arrayCarShema,
+  carShema,
+  CarShema,
   CreateCarShema,
-  editCarJSONShema,
-  EditCarShema,
-  editCarShema,
-  requestCarEditShema,
-  RequestCarEditShema,
-  requestCarJSONShema,
+  RequestCarShema,
   requestCarShema,
-  responseAllCarJSONShema,
-  responseCarJSONShema,
 } from "./car.shema.js";
 import {
   authenticate,
   autorization,
 } from "../user/middlewear/middlewear.strategy.js";
-import { authorize } from "passport";
 import { Role } from "../../helper/enum.js";
 import z from "zod/v3";
+import { FastifyTypedInstance } from "../../types.js";
 
-export function carRoutes(server: FastifyInstance) {
+export function carRoutes(server: FastifyTypedInstance) {
   const controller = new CarController();
-  server.post<{ Body: RequestCarEditShema }>(
+  server.post<{ Body: RequestCarShema }>(
     "/cars",
     {
-      preHandler: [authenticate, autorization(Role.versenyzo)],
       schema: {
-        body: { $ref: "RequestCarShema#" },
+        security: [{ BearerAuth: [] }],
+        tags: ["car"],
+        body: requestCarShema,
         response: {
-          201: { type: "string" },
+          201: z.string(),
         },
       },
+      preHandler: [authenticate, autorization(Role.versenyzo)],
     },
     controller.create.bind(controller)
   );
 
-  server.put<{ Body: RequestCarEditShema; Params: { id: string } }>(
+  server.put<{ Body: RequestCarShema; Params: { id: string } }>(
     "/cars/:id",
     {
       preHandler: [authenticate, autorization(Role.versenyzo)],
-      // schema: {
-      //   body: { $ref: "EditCarShema#" },
-      //   response: {
-      //     201: { type: "string" },
-      //   },
-      //},
+      schema: {
+   security: [{ BearerAuth: [] }],
+        tags: ["car"],
+        body: requestCarShema,
+        response: {
+          201: z.string(),
+        },
+      },
     },
     controller.update.bind(controller)
   );
@@ -55,12 +52,15 @@ export function carRoutes(server: FastifyInstance) {
   server.get(
     "/cars",
     {
+      schema: {
+         security: [{ BearerAuth: [] }],
+        tags: ["car"],
+        response: {
+          200: arrayCarShema,
+        },
+      },
       preHandler: [authenticate, autorization(Role.versenyzo)],
-      // schema: {
-      //   response: {
-      //     200: { $ref: "CarsArrayShema#" },
-      //   },
-    //  },
+
     },
     controller.getAll.bind(controller)
   );
@@ -69,11 +69,13 @@ export function carRoutes(server: FastifyInstance) {
     "/cars/:id",
     {
       preHandler: [authenticate, autorization(Role.versenyzo)],
-      // schema: {
-      //   response: {
-      //     200: { $ref: "CarShema#" },
-      //   },
-      // },
+      schema: {
+         security: [{ BearerAuth: [] }],
+        tags: ["car"],
+        response: {
+          200: carShema,
+        },
+      },
     },
     controller.get.bind(controller)
   );
@@ -82,11 +84,13 @@ export function carRoutes(server: FastifyInstance) {
     "/cars/:id",
     {
       preHandler: [authenticate, autorization(Role.versenyzo)],
-      // schema: {
-      //   response: {
-      //     204: {},
-      //   },
-      // },
+      schema: {
+       security: [{ BearerAuth: [] }],
+        tags: ["car"],
+        response: {
+          204: z.null(),
+        },
+      },
     },
     controller.delete.bind(controller)
   );

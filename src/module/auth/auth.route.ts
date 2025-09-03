@@ -1,4 +1,3 @@
-import { FastifyInstance } from "fastify";
 import { AuthController } from "./auth.controller.js";
 import {
   authenticate,
@@ -7,18 +6,22 @@ import {
 import { Role } from "../../helper/enum.js";
 import {
   LoginRequest,
+  loginResponseShema,
+  requestLoginShema,
 } from "./auth.shema.js";
 import z from "zod/v4";
+import { FastifyTypedInstance } from "../../types.js";
 
-export function authRoutes(server: FastifyInstance) {
+export function authRoutes(server: FastifyTypedInstance) {
   const controller = new AuthController();
 
   server.post<{ Body: LoginRequest }>(
     "/auth",
     {
       schema: {
-        body: { $ref: "RequestLoginSchema#" },
-        response: { 201: { $ref: "LoginResponseSchema#" } },
+        tags: ["auth"],
+        body: requestLoginShema,
+        response: { 201: loginResponseShema },
       },
     },
     controller.login.bind(controller)
@@ -27,21 +30,30 @@ export function authRoutes(server: FastifyInstance) {
   server.put(
     "/auth",
     {
-      preHandler: [authenticate, autorization(Role.versenyzo)]},
-    //   schema: {
-    //     response: { 204: {} },
-    //   },
-    // },
+      schema: {
+        security: [{ BearerAuth: [] }],
+        tags: ["auth"],
+        response: {
+          204: z.null(),
+        },
+      },
+      preHandler: [authenticate, autorization(Role.versenyzo)],
+    },
     controller.logout.bind(controller)
   );
 
   server.post(
     "/auth/refresh",
     {
+      schema: {
+        security: [
+          { BearerAuth: [], RefreshCookie: [] }, // mindkettőt egyszerre kell teljesíteni
+        ],
+
+        tags: ["auth"],
+        response: { 201: loginResponseShema },
+      },
       preHandler: [authenticate, autorization(Role.versenyzo)],
-      // schema: {
-      //   response: { 201: { $ref: "LoginResponseSchema#" } },
-      // },
     },
     controller.refresh.bind(controller)
   );
