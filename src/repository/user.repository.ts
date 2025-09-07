@@ -1,10 +1,11 @@
-import db from "../../db/db.js";
-import { Role } from "../../helper/enum.js";
-import type { CreateUserShema, User, UserReponse } from "./user.shema.js";
+import db from "../db/db.js";
+import { Role } from "../dto/enum.js";
+import type { CreateUserShema, User, UserReponse } from "../dto/user.shema.js";
 
 
 export class UserRepository {
   async create(userDto: CreateUserShema) {
+          console.log("beléptünk a repoba")
     return await db("user")
       .insert({
         name: userDto.name,

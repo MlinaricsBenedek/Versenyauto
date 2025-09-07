@@ -1,5 +1,5 @@
-import db from "../../db/db.js";
-import { CarShema, CreateCarShema } from "./car.shema.js";
+import db from "../db/db.js";
+import { CarShema, CreateCarShema } from "../dto/car.shema.js";
 
 
 export class CarRepository {

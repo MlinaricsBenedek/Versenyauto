@@ -10,10 +10,13 @@ export async function seed(knex) {
   "Hungaroring", "Silverstone", "Monza", "Spa-Francorchamps", 
   "Suzuka", "Circuit de Monaco", "Nürburgring"
 ];
+    const users = await knex('user').select('id');
+    
     const racetrackes = Array.from({length:25}).map(()=>({
     name:faker.helpers.arrayElement(tracks),
     country:faker.location.country(),
     kilometer:faker.number.int({ min: 2, max: 10 }),
+    owner_id:faker.helpers.arrayElement(users).id, 
   }))
 
 

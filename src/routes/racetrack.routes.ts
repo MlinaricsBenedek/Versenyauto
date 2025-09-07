@@ -1,19 +1,18 @@
-import { RaceTrackController } from "./racetrack.controller.js";
+import { RaceTrackController } from "../controller/racetrack.controller.js";
 import {
-  authenticate,
-  autorization,
-} from "../user/middlewear/middlewear.strategy.js";
+  autorization} from "./middlewear/middlewear.strategy.js";
 import {
   requestTrackShema,
   RequestTrackShema,
   trackSHema,
   tracksSHema,
-} from "./racetrack.shema.js";
-import { Role } from "../../helper/enum.js";
+} from "../dto/racetrack.shema.js";
+import { Role } from "../dto/enum.js";
 import z from "zod/v3";
-import { FastifyTypedInstance } from "../../types.js";
+import { FastifyTypedInstance } from "../types.js";
+import { Authenticator } from "@fastify/passport";
 
-export function racetrackRoutes(server: FastifyTypedInstance) {
+export function racetrackRoutes(server: FastifyTypedInstance,fasitfyPassport:Authenticator) {
   const controller = new RaceTrackController();
   server.post<{ Body: RequestTrackShema }>(
     "/racetrack",
@@ -24,7 +23,7 @@ export function racetrackRoutes(server: FastifyTypedInstance) {
         body: requestTrackShema,
         response: { 201: z.string() },
       },
-      preHandler: [authenticate, autorization(Role.versenyiranyito)],
+      preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyiranyito)],
     },
     controller.create.bind(controller)
   );
@@ -38,8 +37,7 @@ export function racetrackRoutes(server: FastifyTypedInstance) {
         body: requestTrackShema,
         response: { 201: z.string()},
       },
-      preHandler: [authenticate, autorization(Role.versenyiranyito)],
-    },
+      preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyiranyito)],    },
     controller.update.bind(controller)
   );
 
@@ -51,8 +49,7 @@ export function racetrackRoutes(server: FastifyTypedInstance) {
         tags: ["racetrack"],
         response: { 200: tracksSHema },
       },
-      preHandler: [authenticate, autorization(Role.versenyiranyito)],
-    },
+      preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyiranyito)],    },
     controller.getAll.bind(controller)
   );
 
@@ -63,7 +60,7 @@ export function racetrackRoutes(server: FastifyTypedInstance) {
         tags: ["racetrack"],
         response: { 200: trackSHema },
       },
-      preHandler: [authenticate, autorization(Role.versenyiranyito)],
+         preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyiranyito)],
     },
 
     controller.get.bind(controller)
@@ -76,8 +73,7 @@ export function racetrackRoutes(server: FastifyTypedInstance) {
         tags: ["racetrack"],
         response: { 204: z.null() },
       },
-      preHandler: [authenticate, autorization(Role.versenyiranyito)],
-    },
+      preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyiranyito)],    },
     controller.delete.bind(controller)
   );
 }

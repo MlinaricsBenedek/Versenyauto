@@ -1,8 +1,9 @@
-import z from "zod/v3"
-export const errorShema = z.object({
-    name:z.string(),
-    message:z.string(),
-    code:z.number(),
-});
 
-export type ErrorShema = z.infer<typeof errorShema>;
+import { ZodError } from "zod/v3"
+
+export function formatZodError(zodError: ZodError<unknown>) {
+  return zodError.errors.map((e) => ({
+    field: e.path.join("."),
+    detail: e.message ?? "Invalid properties",
+  }));
+}

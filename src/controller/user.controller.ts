@@ -1,13 +1,14 @@
 import fastify, { FastifyReply, FastifyRequest } from "fastify";
-import { UserService } from "./user.service.js";
+import { UserService } from "../service/user.service.js";
 import {
   EditUserRequestShema,
   requestUserShema,
   RequestUserSHema,
+  responseUserShema,
   UserReponse,
-} from "./user.shema.js";
-import { BadRequestError, NotFoundError, UnathorizedError } from "../../error/errors.js";
-import { Role } from "../../helper/enum.js";
+} from "../dto/user.shema.js"
+import { BadRequestError, NotFoundError, UnathorizedError } from "../error/errors.js";
+import { Role } from "../dto/enum.js";
 
 export class UserController {
   private userService: UserService;
@@ -19,6 +20,7 @@ export class UserController {
     request: FastifyRequest<{ Body: RequestUserSHema }>,
     reply: FastifyReply
   ) {
+    console.log("beléptünk a végpontra")
     const result = requestUserShema.safeParse(request.body);
     if (!result.success)
       throw new BadRequestError("Invalid properties", result.error);
@@ -27,11 +29,11 @@ export class UserController {
   }
 
   async get(request: FastifyRequest<{Params: { id: string }}>, reply: FastifyReply) {
- let userId=(request as any).userId;
+      let userDto = responseUserShema.safeParse(request.user)
       let paramId=Number(request.params.id)
+      if(!userDto.success) throw new UnathorizedError();
     if(!paramId) throw new BadRequestError("Invalid params")
-      let user = await this.userService.get(paramId,userId)
-  return reply.code(200).send(user);
+  return reply.code(200).send(await this.userService.get(paramId,userDto.data.id));
 }
 
   async getAll(request: FastifyRequest, reply: FastifyReply) {
@@ -47,31 +49,33 @@ export class UserController {
         throw new BadRequestError('Role has to be versenyzo or versenyiranyito');
       }
       await this.userService.editUserRole(userId,request.body.role);
-      return reply.code(200).send("successfull edit");
+      return reply.code(201).send("User role have been updated");
   }
 
   async update(
     request: FastifyRequest<{ Body:RequestUserSHema ,Params: { id: string } }>,
     reply: FastifyReply
   ) {
-    let userId=(request as any).userId;
+     let user =responseUserShema.safeParse(request.user);
+    if(!user.success) throw new UnathorizedError();
     let paramId=Number(request.params.id)
-    if(!paramId && !userId) throw new BadRequestError("Invalid params")
+    if(!paramId) throw new BadRequestError("Invalid params")
     const result = requestUserShema.safeParse({...request.body});
     if (!result.success)
       throw new BadRequestError("Invalid properties", result.error);
-    await this.userService.update(result.data,userId,paramId);
-    return reply.code(201).send();
+    await this.userService.update(result.data,user.data.id,paramId);
+    return reply.code(201).send("Your accoutn have been updated");
   } 
 
   async delete(
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply
   ) {
-    let userId=(request as any).userId;
+    let user =responseUserShema.safeParse(request.user);
+    if(!user.success) throw new UnathorizedError();
     let paramId=Number(request.params.id)
     if(!paramId) throw new BadRequestError("Invalid params")
-    await this.userService.delete(paramId,userId);
+    await this.userService.delete(paramId,user.data.id);
     return reply.code(204).send();
   }
 }

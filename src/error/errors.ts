@@ -38,3 +38,11 @@ export class UnathorizedError extends Error {
     this.statusCode = 401;
   }
 }
+export class UnprocessableEntity extends Error {
+  statusCode: number;
+  constructor(message = "Data was modified") {
+    super(message);
+    this.name = "UnathorizedError";
+    this.statusCode = 401;
+  }
+}

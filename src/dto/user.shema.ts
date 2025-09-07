@@ -1,6 +1,6 @@
 import { number,  z, ZodError } from "zod/v3";
-import { BadRequestError } from "../../error/errors.js";
-import { Role } from "../../helper/enum.js";
+import { BadRequestError } from "../error/errors.js"
+import { Role } from "../dto/enum.js"
 import {zodToJsonSchema} from "zod-to-json-schema";
 import { FastifyInstance } from "fastify";
 
@@ -44,12 +44,7 @@ export const jwTokenResponse=z.object({
 export const editRoleUserShema = z.object({
    role: z.nativeEnum(Role)
 });
-export function formatZodError(zodError: ZodError<unknown>) {
-  return zodError.errors.map((e) => ({
-    field: e.path.join("."),
-    detail: e.message ?? "Invalid properties",
-  }));
-}
+
 
 
 export type RequestUserSHema = z.infer<typeof requestUserShema>

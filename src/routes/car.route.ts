@@ -1,4 +1,4 @@
-import { CarController } from "./car.controller.js";
+import { CarController } from "../controller/car.controller.js"
 import {
   arrayCarShema,
   carShema,
@@ -6,16 +6,16 @@ import {
   CreateCarShema,
   RequestCarShema,
   requestCarShema,
-} from "./car.shema.js";
+} from "../dto/car.shema.js";
 import {
-  authenticate,
   autorization,
-} from "../user/middlewear/middlewear.strategy.js";
-import { Role } from "../../helper/enum.js";
+} from "./middlewear/middlewear.strategy.js";
+import { Role } from "../dto/enum.js";
 import z from "zod/v3";
-import { FastifyTypedInstance } from "../../types.js";
+import { FastifyTypedInstance } from "../types.js"
+import { Authenticator } from "@fastify/passport";
 
-export function carRoutes(server: FastifyTypedInstance) {
+export function carRoutes(server: FastifyTypedInstance,fasitfyPassport:Authenticator) {
   const controller = new CarController();
   server.post<{ Body: RequestCarShema }>(
     "/cars",
@@ -28,7 +28,7 @@ export function carRoutes(server: FastifyTypedInstance) {
           201: z.string(),
         },
       },
-      preHandler: [authenticate, autorization(Role.versenyzo)],
+      preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyzo)],    
     },
     controller.create.bind(controller)
   );
@@ -36,7 +36,7 @@ export function carRoutes(server: FastifyTypedInstance) {
   server.put<{ Body: RequestCarShema; Params: { id: string } }>(
     "/cars/:id",
     {
-      preHandler: [authenticate, autorization(Role.versenyzo)],
+     
       schema: {
    security: [{ BearerAuth: [] }],
         tags: ["car"],
@@ -45,6 +45,7 @@ export function carRoutes(server: FastifyTypedInstance) {
           201: z.string(),
         },
       },
+           preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyzo)],   
     },
     controller.update.bind(controller)
   );
@@ -59,7 +60,7 @@ export function carRoutes(server: FastifyTypedInstance) {
           200: arrayCarShema,
         },
       },
-      preHandler: [authenticate, autorization(Role.versenyzo)],
+           preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyiranyito)],   
 
     },
     controller.getAll.bind(controller)
@@ -68,7 +69,7 @@ export function carRoutes(server: FastifyTypedInstance) {
   server.get<{ Params: { id: string } }>(
     "/cars/:id",
     {
-      preHandler: [authenticate, autorization(Role.versenyzo)],
+    
       schema: {
          security: [{ BearerAuth: [] }],
         tags: ["car"],
@@ -76,6 +77,7 @@ export function carRoutes(server: FastifyTypedInstance) {
           200: carShema,
         },
       },
+        preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyzo)],   
     },
     controller.get.bind(controller)
   );
@@ -83,7 +85,7 @@ export function carRoutes(server: FastifyTypedInstance) {
   server.delete<{ Params: { id: string } }>(
     "/cars/:id",
     {
-      preHandler: [authenticate, autorization(Role.versenyzo)],
+
       schema: {
        security: [{ BearerAuth: [] }],
         tags: ["car"],
@@ -91,6 +93,7 @@ export function carRoutes(server: FastifyTypedInstance) {
           204: z.null(),
         },
       },
+        preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyzo)],   
     },
     controller.delete.bind(controller)
   );
