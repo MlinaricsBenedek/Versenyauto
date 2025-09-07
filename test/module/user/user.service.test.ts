@@ -33,7 +33,7 @@ describe("loginStrategy ", () => {
     const done = (err: any, user?: any) => {
       doneUser = user;
     };
-    await strategy._verify("teszt@example.com", "password", done);
+    await (strategy as any)._verify("teszt@example.com", "password", done);
     const parsed = responseUserShema.parse(doneUser);
     expect(parsed).toEqual({
       id: 1,
