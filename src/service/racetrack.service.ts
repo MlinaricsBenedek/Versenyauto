@@ -1,7 +1,7 @@
 
-import { RaceTrackRepository } from "./racetrack.repository.js";
-import { createTrackSHema, requestTrackShema, RequestTrackShema, TrackShema, trackSHema, tracksSHema } from "./racetrack.shema.js";
-import { BadRequestError, NotFoundError } from "../../error/errors.js";
+import { createTrackSHema, requestTrackShema, RequestTrackShema, TrackShema, trackSHema, tracksSHema } from "../dto/racetrack.shema.js";
+import { BadRequestError, NotFoundError, UnprocessableEntity } from "../error/errors.js";
+import { RaceTrackRepository } from "../repository/racetrack.repository.js";
 
 export class RaceTrackService {
   private raceTrackRepository: RaceTrackRepository;
@@ -26,7 +26,7 @@ export class RaceTrackService {
         throw new NotFoundError("Resource not found");
     }
     let raceTrack = trackSHema.safeParse(track);
-    if(!raceTrack.success) throw new BadRequestError();
+    if(!raceTrack.success) throw new UnprocessableEntity();
     return raceTrack.data;
   }
 

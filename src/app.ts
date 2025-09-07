@@ -5,11 +5,19 @@ import swagger from "@fastify/swagger";
  import {jsonSchemaTransform,serializerCompiler,validatorCompiler,ZodTypeProvider} from "fastify-type-provider-zod"
 import fastifySwaggerUI from "@fastify/swagger-ui";
 import dotenv from "dotenv";
-import { userRoutes } from "./module/user/user.route.js";
 import cors from "@fastify/cors"
-import { authRoutes } from "./module/auth/auth.route.js";
-import { carRoutes } from "./module/cars/car.route.js";
-import { racetrackRoutes } from "./module/racetrack/racetrack.routes.js";
+
+import Passport, { Authenticator }  from "@fastify/passport"
+import fastifySecureSession from "@fastify/secure-session";
+import { accessTokenAutenticator, loginStrategy } from "./routes/middlewear/middlewear.strategy.js";
+import { UserService } from "./service/user.service.js";
+import { userRoutes } from "./routes/user.route.js";
+import { authRoutes } from "./routes/auth.route.js";
+import { racetrackRoutes } from "./routes/racetrack.routes.js";
+import { carRoutes } from "./routes/car.route.js";
+import { BadRequestError } from "./error/errors.js";
+
+
 dotenv.config();
 
 const server = fastify({
@@ -33,8 +41,23 @@ const server = fastify({
     },
   },
  }).withTypeProvider<ZodTypeProvider>();
+
+ 
+server.register(fastifyCookie, {
+  secret: process.env.COOKIE_SECRET!,
+});
+
+server.register(fastifySecureSession, {
+  key: Buffer.from('9F3A1C7D4B2E8F1065A1D9C0B4F7E2D1A3C5B6E7F8A9D0C1B2E3F4A5C6D7E8F9', 'hex')
+});
+const passport = new Authenticator();
+ server.register(passport.initialize());
+ server.register(passport.secureSession()); 
 server.register(cors,{origin:"*"});
 dotenv.config();
+
+
+
 server.setValidatorCompiler(validatorCompiler);
 server.setSerializerCompiler(serializerCompiler);
 server.register(swagger, {
@@ -73,24 +96,31 @@ server.register(fastifySwaggerUI, {
   },
 });
 
-server.register(fastifyCookie, {
-  secret: process.env.COOKIE_SECRET!,
-});
-
 server.addHook("preHandler", function (req, reply, done) {
   if (req.body) {
     req.log.info({ body: req.body }, "parsed body");
   }
   done();
 });
-server.setErrorHandler(GlobalErrorHandler.ErrorHandler);
 
+accessTokenAutenticator(passport);
+const userService =new UserService()
+loginStrategy(passport,userService);
+
+server.setErrorHandler(GlobalErrorHandler.ErrorHandler);
 async function main() {
   try {
-    server.register(carRoutes)
-    server.register(userRoutes)
-   server.register(authRoutes)
-    server.register(racetrackRoutes)
+
+   await server.register(async (instance) => {
+  await userRoutes(server, passport);
+})
+   await server.register(async (instance) => {
+  await authRoutes(server, passport); })
+   await server.register(async (instance) => {
+  await racetrackRoutes(server, passport);})
+   await server.register(async (instance) => {
+  await carRoutes(server, passport);})
+  
     await server.listen({ port: 3000, host: "0.0.0.0" });
     console.log(`Server is running on http://0.0.0.0:3000`);
 

@@ -1,9 +1,9 @@
-import crypto, { pbkdf2, randomBytes } from "crypto";
+import crypto, { randomBytes } from "crypto";
 
 const iterator = 1000;
 const delimeter = ";";
-
-export function Hash(password: string) {
+export class PasswordHandler{
+  Hash(password: string) {
   let salt = randomBytes(16).toString("hex");
   let hash = crypto
     .pbkdf2Sync(password, salt, iterator, 64, "sha256")
@@ -11,7 +11,7 @@ export function Hash(password: string) {
   return [hash, delimeter, salt].join("");
 }
 
-export function Verify(password: string, hashedPassword: string) {
+  Verify(password: string, hashedPassword: string) {
   if (!hashedPassword) return false;
 
   const parts = hashedPassword.split(";");
@@ -26,4 +26,5 @@ export function Verify(password: string, hashedPassword: string) {
     Buffer.from(hash, "hex"),
     Buffer.from(newHash, "hex")
   );
+}
 }

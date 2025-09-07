@@ -1,18 +1,18 @@
-import { AuthController } from "./auth.controller.js";
+import { AuthController } from "../controller/auth.controller.js";
 import {
-  authenticate,
   autorization,
-} from "../user/middlewear/middlewear.strategy.js";
-import { Role } from "../../helper/enum.js";
+} from "../routes/middlewear/middlewear.strategy.js";
+import { Role } from "../dto/enum.js";
 import {
   LoginRequest,
   loginResponseShema,
   requestLoginShema,
-} from "./auth.shema.js";
+} from "../dto/auth.shema.js";
 import z from "zod/v4";
-import { FastifyTypedInstance } from "../../types.js";
+import { FastifyTypedInstance } from "../types.js";
+import { Authenticator } from "@fastify/passport";
 
-export function authRoutes(server: FastifyTypedInstance) {
+export function authRoutes(server: FastifyTypedInstance,fasitfyPassport:Authenticator) {
   const controller = new AuthController();
 
   server.post<{ Body: LoginRequest }>(
@@ -23,6 +23,7 @@ export function authRoutes(server: FastifyTypedInstance) {
         body: requestLoginShema,
         response: { 201: loginResponseShema },
       },
+      preHandler: fasitfyPassport.authenticate('local',{ session: false })
     },
     controller.login.bind(controller)
   );
@@ -37,7 +38,7 @@ export function authRoutes(server: FastifyTypedInstance) {
           204: z.null(),
         },
       },
-      preHandler: [authenticate, autorization(Role.versenyzo)],
+      preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyzo)],
     },
     controller.logout.bind(controller)
   );
@@ -46,14 +47,11 @@ export function authRoutes(server: FastifyTypedInstance) {
     "/auth/refresh",
     {
       schema: {
-        security: [
-          { BearerAuth: [], RefreshCookie: [] }, // mindkettőt egyszerre kell teljesíteni
-        ],
-
+        security: [{ BearerAuth: []}],/* ,RefreshCookie: []*/ 
         tags: ["auth"],
         response: { 201: loginResponseShema },
       },
-      preHandler: [authenticate, autorization(Role.versenyzo)],
+        preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyzo)],
     },
     controller.refresh.bind(controller)
   );

@@ -1,6 +1,7 @@
-import {UnathorizedError } from "../error/errors.js";
-import { UserReponse } from "../dto/user.shema.js";
+import { UnathorizedError } from "../../error/errors.js";
+import { UserReponse } from "../../dto/user.shema.js"
 import jwt from "jsonwebtoken";
+
 import dotenv from "dotenv";
 
 dotenv.config();

@@ -6,6 +6,6 @@ export type FastifyTypedInstance=FastifyInstance<
 RawServerDefault,
 RawRequestDefaultExpression,
  RawReplyDefaultExpression,
- pino.Logger,
+FastifyBaseLogger,
  ZodTypeProvider
  >

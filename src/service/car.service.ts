@@ -1,7 +1,7 @@
-import { BadRequestError, ForbiddenError, NotFoundError } from "../../error/errors.js";
-import { UserService } from "../user/user.service.js";
-import { CarRepository } from "./car.repository.js";
-import { arrayCarShema, carShema, CarShema, createCarShema, RequestCarShema } from "./car.shema.js";
+import { BadRequestError, ForbiddenError, NotFoundError, UnprocessableEntity } from "../error/errors.js";
+import { UserService } from "./user.service.js";
+import { arrayCarShema, carShema, CarShema, createCarShema, RequestCarShema } from "../dto/car.shema.js";
+import { CarRepository } from "../repository/car.repository.js";
 
 
 export class CarSerive {
@@ -18,7 +18,7 @@ export class CarSerive {
       throw new NotFoundError("Resource not found");
     }
     let cars= arrayCarShema.safeParse(carsDTO)
-    if(!cars.success) throw new BadRequestError();
+    if(!cars.success) throw new UnprocessableEntity();
     return cars.data;
   }
 
@@ -28,7 +28,7 @@ export class CarSerive {
       throw new NotFoundError("Resource not found");
     }
     let carDTO =carShema.safeParse(car);
-    if(!carDTO.success) throw new BadRequestError();
+    if(!carDTO.success) throw new UnprocessableEntity();
     if(!await this._userService.UserPrivilege(carDTO.data.user_id,autenticatedUserId)) throw new ForbiddenError();
     return carDTO.data;
   }

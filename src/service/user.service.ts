@@ -1,17 +1,9 @@
-import { UserRepository } from "./user.repository.js";
-import {
-  createUserShema,
-  EditUserRequestShema,
-  requestUserShema,
-  RequestUserSHema,
-  responseUserArraySchema,
-  responseUserShema,
-  User,
-  userShema,
-} from "./user.shema.js";
-import { Hash, Verify } from "../../helper/hash.js";
-import { BadRequestError, ForbiddenError, NotFoundError, UnathorizedError } from "../../error/errors.js";
-import { Role } from "../../helper/enum.js";
+
+import { BadRequestError, ForbiddenError, NotFoundError, UnathorizedError, UnprocessableEntity } from "../error/errors.js";
+import { Role } from "../dto/enum.js";
+import { PasswordHandler } from "./helper/hash.js";
+import { UserRepository } from "../repository/user.repository.js";
+import { createUserShema, EditUserRequestShema, RequestUserSHema, responseUserArraySchema, responseUserShema, User, userShema } from "../dto/user.shema.js";
 
 export class UserService {
   private userRepository: UserRepository;
@@ -19,11 +11,20 @@ export class UserService {
     this.userRepository = new UserRepository();
   }
   async register(userDto: RequestUserSHema) {
-    userDto.password = Hash(userDto.password);
+      console.log("beléptünk a servicebe")
+    const passwordHandler = new PasswordHandler()
+    userDto.password = passwordHandler.Hash(userDto.password);
     let user = createUserShema.safeParse({...userDto,role:Role.versenyzo})
     if(!user.success) throw new BadRequestError();
     let id = await this.userRepository.create(user.data);
+    console.log("Visszatertunk a service-bol")
     if (!id) throw new BadRequestError();
+  }
+
+  async findByEmail(email:string){
+    let user = userShema.safeParse(await this.userRepository.findByEmail(email))
+    if(!user) throw new BadRequestError();
+     return user.data;
   }
 
   async getUserIfHeHasPrivilige(id: number,autenticatedUserId:number) {
@@ -38,6 +39,13 @@ export class UserService {
       if(!user.success) throw new BadRequestError()
     return user.data;
   }
+    async getById(id: number) {
+    let user =await this.userRepository.get(id);
+    let userDto = responseUserShema.safeParse(user); 
+    if(!userDto.success) throw new UnprocessableEntity();
+    return userDto.data;
+  }
+
   async get(id: number,autenticatedUserId:number) {
     let user =await this.getUserIfHeHasPrivilige(id,autenticatedUserId);
     let userDto = responseUserShema.safeParse(user); 
@@ -65,7 +73,8 @@ export class UserService {
 
   async update(userRequest: EditUserRequestShema,autenticatedUserId:number,paramId:number) {
     let userDto= await this.getUserIfHeHasPrivilige(paramId,autenticatedUserId);
-    userRequest.password=Hash(userRequest.password)
+    const passwordHandler = new PasswordHandler()
+    userRequest.password=passwordHandler.Hash(userRequest.password)
     let user = userShema.safeParse({...userRequest,refreshToken:userDto.refreshToken,id:paramId,role:userDto.role})
     if(!user.success) throw new BadRequestError("Invalid request body");
     let id = await this.userRepository.update(user.data);

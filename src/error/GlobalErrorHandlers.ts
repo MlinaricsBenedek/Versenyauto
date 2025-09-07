@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { ErrorShema } from "./ErrorModell.js";
-import { BadRequestError, ForbiddenError, NotFoundError, UnathorizedError } from "./errors.js";
-import { formatZodError } from "../module/user/user.shema.js";
+import {  formatZodError } from "./ErrorModell.js";
+import { BadRequestError, ForbiddenError, NotFoundError, UnathorizedError, UnprocessableEntity } from "./errors.js";
+
 import { unknown, ZodError } from "zod/v3";
 export class GlobalErrorHandler{
  
@@ -41,6 +41,15 @@ if (error instanceof BadRequestError) {
             statusCode:401,
             name:"UnathorizedError",
             message:"You are not logged in "+error.message,
+        });
+        request.log.error({ err: error, url: request.url, method: request.method });
+    }
+    if(error instanceof UnprocessableEntity)
+    {
+          reply.code(422).send({
+            statusCode:422,
+            name:"UnprocessableEntity",
+            message:"The data was modified, can not execute the request "+error.message,
         });
         request.log.error({ err: error, url: request.url, method: request.method });
     }

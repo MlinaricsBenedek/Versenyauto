@@ -1,5 +1,5 @@
-import db from "../../db/db.js";
-import { CreateTrackShema, TrackShema } from "./racetrack.shema.js";
+import db from "../db/db.js"
+import { CreateTrackShema, TrackShema } from "../dto/racetrack.shema.js"
 
 export class RaceTrackRepository {
   async create(racetrackDto: CreateTrackShema) {

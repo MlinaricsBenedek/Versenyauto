@@ -1,6 +1,5 @@
-import { UserController } from "./user.controller.js";
+import { UserController } from "../controller/user.controller.js";
 import {
-  authenticate,
   autorization,
 } from "./middlewear/middlewear.strategy.js";
 import {
@@ -10,12 +9,13 @@ import {
   RequestUserSHema,
   responseUserArraySchema,
   responseUserShema,
-} from "./user.shema.js";
-import { Role } from "../../helper/enum.js";
-import { FastifyTypedInstance } from "../../types.js";
+} from "../dto/user.shema.js";
+import { Role } from "../dto/enum.js";
+import { FastifyTypedInstance } from "../types.js";
 import z from "zod";
+import { Authenticator } from "@fastify/passport";
 
-export async function userRoutes(server: FastifyTypedInstance) {
+export async function userRoutes(server: FastifyTypedInstance,fasitfyPassport:Authenticator) {
   const controller = new UserController();
   server.post<{ Body: RequestUserSHema }>(
     "/user",
@@ -40,7 +40,7 @@ export async function userRoutes(server: FastifyTypedInstance) {
         },
         security: [{ BearerAuth: [] }],
       },
-      preHandler: [authenticate, autorization(Role.versenyiranyito)],
+    preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyiranyito)],
     },
     controller.getAll.bind(controller)
   );
@@ -54,7 +54,7 @@ export async function userRoutes(server: FastifyTypedInstance) {
           200: responseUserShema,
         },
       },
-      preHandler: [authenticate, autorization(Role.versenyzo)],
+      preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyzo)],
     },
     controller.get.bind(controller)
   );
@@ -70,7 +70,7 @@ export async function userRoutes(server: FastifyTypedInstance) {
           201: z.string(),
         },
       },
-      preHandler: [authenticate, autorization(Role.versenyzo)],
+      preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyzo)],
     },
     controller.update.bind(controller)
   );
@@ -86,7 +86,7 @@ export async function userRoutes(server: FastifyTypedInstance) {
           201: z.string(),
         },
       },
-      preHandler: [authenticate, autorization(Role.versenyiranyito)],
+      preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyiranyito)],
     },
     controller.edit.bind(controller)
   );
@@ -101,7 +101,7 @@ export async function userRoutes(server: FastifyTypedInstance) {
           204: z.null(),
         },
       },
-      preHandler: [authenticate, autorization(Role.versenyzo)],
+      preHandler: [fasitfyPassport.authenticate('jwt',{ session: false }), autorization(Role.versenyzo)],
     },
     controller.delete.bind(controller)
   );
